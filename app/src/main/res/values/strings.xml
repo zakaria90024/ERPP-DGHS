@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ERPP-DGHS</string>
+    <!--    <string name="web_hostname">kibana.lt.loc</string> Doesnt works-->
+    <string name="web_url">https://erppdghs.com/web/login</string>
+</resources>
