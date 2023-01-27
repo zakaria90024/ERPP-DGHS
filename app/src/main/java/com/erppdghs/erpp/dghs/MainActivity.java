@@ -85,32 +85,36 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     private void loadWeb() {
-        final Animation fadeIn = new AlphaAnimation(0, 1);
-        fadeIn.setInterpolator(new DecelerateInterpolator());
-        fadeIn.setDuration(1000);
+//        final Animation fadeIn = new AlphaAnimation(0, 1);
+//        fadeIn.setInterpolator(new DecelerateInterpolator());
+//        fadeIn.setDuration(1000);
+//
+//        final Animation fadeOut = new AlphaAnimation(1, 0);
+//        fadeOut.setInterpolator(new AccelerateInterpolator());
+//        fadeOut.setStartOffset(1000);
+//        fadeOut.setDuration(1000);
+//
+//        final AnimationSet animationSet = new AnimationSet(false);
+//        animationSet.addAnimation(fadeIn);
+//        animationSet.addAnimation(fadeOut);
 
-        final Animation fadeOut = new AlphaAnimation(1, 0);
-        fadeOut.setInterpolator(new AccelerateInterpolator());
-        fadeOut.setStartOffset(1000);
-        fadeOut.setDuration(1000);
-
-        final AnimationSet animationSet = new AnimationSet(false);
-        animationSet.addAnimation(fadeIn);
-        animationSet.addAnimation(fadeOut);
-
+        final int i = 0;
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                splash.setAnimation(fadeOut);
+                //splash.setAnimation(fadeOut);
                 splash.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        //progressBar.setVisibility(View.GONE);
-                        //splash.setVisibility(View.GONE);
-                        webView.setVisibility(View.VISIBLE);
-                        webView.setAnimation(fadeIn);
+                        if(i == 0){
+                            progressBar.setVisibility(View.GONE);
+                            splash.setVisibility(View.GONE);
+                            webView.setVisibility(View.VISIBLE);
+                            //webView.setAnimation(fadeIn);
+                        }
+
                     }
-                }, 1600);
+                }, 2200);
             }
         });
 
