@@ -5,7 +5,7 @@
         <item name="colorSecondary">#FFFFFF</item>
         <item name="colorSecondaryVariant">#FFFFFF</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:statusBarColor">#243742</item>
         <!-- Customize your theme here. -->
     </style>
     <!-- Base application theme. -->
@@ -14,6 +14,6 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:statusBarColor">#101633</item>
+        <item name="android:statusBarColor">#243742</item>
     </style>
 </resources>
