@@ -1,222 +1,222 @@
 package com.erppdghs.erpp.dghs;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
+import static com.erppdghs.erpp.dghs.config.Constant.WEB_URL;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ClipData;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.Bitmap;
+import android.content.Intent;
 import android.net.Uri;
-import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Message;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.webkit.CookieManager;
-import android.webkit.SslErrorHandler;
-import android.webkit.WebChromeClient;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.DecelerateInterpolator;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-public class MainActivity extends AppCompatActivity {
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.content.ContextCompat;
 
-    protected WebView mainWebView;
-    // private ProgressBar mProgress;
-    private Context mContext;
-    private WebView mWebviewPop;
+import com.erppdghs.erpp.dghs.config.ChromeClient;
+import com.erppdghs.erpp.dghs.config.Constant;
 
-    private ProgressBar progress;
+import java.util.List;
 
-    private String url = "https://erppdghs.com/web/login";
-    private String target_url_prefix = "https://erppdghs.com/web/login";
+import pub.devrel.easypermissions.EasyPermissions;
 
-    public void onBackPressed() {
+public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
-        if (mainWebView.isFocused() && mainWebView.canGoBack()) {
-            mainWebView.goBack();
-        } else {
-            super.onBackPressed();
-            finish();
-        }
-    }
 
+    ProgressBar progressBar;
+    private Context context;
+    private Activity activity;
+    private CoordinatorLayout coordinatorLayout;
+    private WebView webView;
+    private ImageView splash;
+    private static final String[] REQUIRED_PERMISSION =
+            {Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE};
+    private static final int FILECHOOSER_RESULTCODE = 1;
+    private ChromeClient chromeClient;
+
+    @SuppressLint({"SetJavaScriptEnabled", "ObsoleteSdkInt"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        context = getApplicationContext();
+        activity = this;
 
-        // Get main webview
-        mainWebView = (WebView) findViewById(R.id.activity_main_webview);
+        progressBar = findViewById(R.id.pb_webLoad);
 
-        //progress = (ProgressBar) findViewById(R.id.progressBar);
-        //progress.setMax(100);
+        coordinatorLayout = findViewById(R.id.cl_webView);
+        coordinatorLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.colorSplashScreenBackground));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mainWebView.setWebContentsDebuggingEnabled(true);
-        }
+        splash = findViewById(R.id.img_splash);
 
-        mainWebView.getSettings().setUserAgentString("example_android_app");
+        webView = findViewById(R.id.wv_nyoloWeb);
+        webView.setVisibility(View.GONE);
 
-        // Cookie manager for the webview
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.setAcceptCookie(true);
-
-        // Get outer container
-        //mContainer = (FrameLayout) findViewById(R.id.webview_frame);
-//        if (!InternetConnection.checkNetworkConnection(this)) {
-//            showAlert(this, "No network found",
-//                    "Please check your internet settings.");
-//        } else {
-
-            // Settings
-            WebSettings webSettings = mainWebView.getSettings();
-            webSettings.setJavaScriptEnabled(true);
-            //webSettings.setAppCacheEnabled(true);
-            webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-            webSettings.setSupportMultipleWindows(true);
-
-            mainWebView.setWebViewClient(new MyCustomWebViewClient());
-            mainWebView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
-
-            mainWebView.setWebChromeClient(new MyCustomChromeClient());
-            mainWebView.loadUrl(url);
-       // }
+        if (hasCameraPermission())
+            loadWeb();
+        else
+            EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.permission_message_denied_camera),
+                    Constant.REQUEST_REQUIRED_PERMISSION,
+                    REQUIRED_PERMISSION);
 
     }
 
-    // @Override
-    // public boolean onCreateOptionsMenu(Menu menu) {
-    // // Inflate the menu; this adds items to the action bar if it is present.
-    // getMenuInflater().inflate(R.menu.example_main, menu);
-    // return true;
-    // }
+    private void loadWeb() {
+        final Animation fadeIn = new AlphaAnimation(0, 1);
+        fadeIn.setInterpolator(new DecelerateInterpolator());
+        fadeIn.setDuration(1000);
 
-    private class MyCustomWebViewClient extends WebViewClient {
+        final Animation fadeOut = new AlphaAnimation(1, 0);
+        fadeOut.setInterpolator(new AccelerateInterpolator());
+        fadeOut.setStartOffset(1000);
+        fadeOut.setDuration(1000);
 
-        @Override
-        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        final AnimationSet animationSet = new AnimationSet(false);
+        animationSet.addAnimation(fadeIn);
+        animationSet.addAnimation(fadeOut);
 
-//            progress.setProgress(0);
- //           progress.setVisibility(View.VISIBLE);
-            super.onPageStarted(view, url, favicon);
-        }
-
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            String host = Uri.parse(url).getHost();
-            //Toast.makeText(MainActivity.this, host,
-            //Toast.LENGTH_SHORT).show();
-            if (host.equals(target_url_prefix)) {
-                // This is my web site, so do not override; let my WebView load
-                // the page
-                if (mWebviewPop != null) {
-                    mWebviewPop.setVisibility(View.GONE);
-                    //mContainer.removeView(mWebviewPop);
-                    mWebviewPop = null;
-                }
-                return false;
-            }
-
-            if (host.contains("m.facebook.com") || host.contains("facebook.co")
-                    || host.contains("google.co")
-                    || host.contains("www.facebook.com")
-                    || host.contains(".google.com")
-                    || host.contains(".google.co")
-                    || host.contains("accounts.google.com")
-                    || host.contains("accounts.google.co.in")
-                    || host.contains("www.accounts.google.com")
-                    || host.contains("www.twitter.com")
-                    || host.contains("secure.payu.in")
-                    || host.contains("https://secure.payu.in")
-                    || host.contains("oauth.googleusercontent.com")
-                    || host.contains("content.googleapis.com")
-                    || host.contains("ssl.gstatic.com")) {
-                return false;
-            }
-            // Otherwise, the link is not for a page on my site, so launch
-            // another Activity that handles URLs
-            //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            //startActivity(intent);
-            //return true;
-            return false;
-        }
-
-        @Override
-        public void onPageFinished(WebView view, String url) {
-//            progress.setVisibility(View.GONE);
-            super.onPageFinished(view, url);
-        }
-
-        @Override
-        public void onReceivedSslError(WebView view, SslErrorHandler handler,
-                                       SslError error) {
-            Log.d("onReceivedSslError", "onReceivedSslError");
-            // super.onReceivedSslError(view, handler, error);
-        }
-    }
-
-//    public void setValue(int progress) {
-//        this.progress.setProgress(progress);
-//    }
-
-    public void showAlert(Context context, String title, String text) {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                context);
-
-        // set title
-        alertDialogBuilder.setTitle(title);
-
-        // set dialog message
-        alertDialogBuilder.setMessage(text).setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // if this button is clicked, close
-                        // current activity
-                        finish();
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                splash.setAnimation(fadeOut);
+                splash.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        //progressBar.setVisibility(View.GONE);
+                        //splash.setVisibility(View.GONE);
+                        webView.setVisibility(View.VISIBLE);
+                        webView.setAnimation(fadeIn);
                     }
-                }).create().show();
+                }, 1600);
+            }
+        });
 
+        webView.loadUrl(WEB_URL);
+
+        //Set Custom Chrome Client
+        chromeClient = new ChromeClient(this, (intent, resultCode) ->
+                startActivityForResult(intent, resultCode));
+        webView.setWebChromeClient(chromeClient);
+
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setDomStorageEnabled(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            settings.setDatabasePath("/data/data" + webView.getContext().getPackageName() + "/databases/");
+        }
     }
 
-    private class MyCustomChromeClient extends WebChromeClient {
+    protected void exitDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-        @Override
-        public boolean onCreateWindow(WebView view, boolean isDialog,
-                                      boolean isUserGesture, Message resultMsg) {
-            mWebviewPop = new WebView(mContext);
-            mWebviewPop.setVerticalScrollBarEnabled(false);
-            mWebviewPop.setHorizontalScrollBarEnabled(false);
-            mWebviewPop.setWebViewClient(new MyCustomWebViewClient());
-            mWebviewPop.getSettings().setJavaScriptEnabled(true);
-            mWebviewPop.getSettings().setSavePassword(false);
-            mWebviewPop.setLayoutParams(new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
-            //mContainer.addView(mWebviewPop);
-            WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
-            transport.setWebView(mWebviewPop);
-            resultMsg.sendToTarget();
+        builder.setTitle(getString(R.string.alert_quit_title));
+        builder.setMessage(getString(R.string.alert_quit_message));
+        builder.setCancelable(true);
 
-            return true;
+        builder.setPositiveButton(getText(R.string.text_yes), (dialogInterface, i) -> MainActivity.super.onBackPressed());
+
+        builder.setNegativeButton(getString(R.string.text_no), (dialogInterface, i) -> dialogInterface.cancel());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack();
+
+        } else {
+            exitDialog();
         }
+    }
 
-        @Override
-        public void onProgressChanged(WebView view, int newProgress) {
-            // TODO Auto-generated method stub
-            super.onProgressChanged(view, newProgress);
-            //MainActivity.this.setValue(newProgress);
+    private boolean hasCameraPermission() {
+        return EasyPermissions.hasPermissions(MainActivity.this, REQUIRED_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+        loadWeb();
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+        EasyPermissions.requestPermissions(
+                this,
+                getString(R.string.permission_message_denied_camera),
+                Constant.REQUEST_REQUIRED_PERMISSION,
+                REQUIRED_PERMISSION);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == FILECHOOSER_RESULTCODE) {
+            ValueCallback<Uri[]> mUploadMessages = chromeClient.getResultChooserImage().getValueCallback();
+            Uri mCapturedImageURI = chromeClient.getResultChooserImage().getUri();
+            if (mUploadMessages != null)
+                handleUploadMessages(intent, mUploadMessages, mCapturedImageURI);
         }
+    }
 
-        @Override
-        public void onCloseWindow(WebView window) {
-            Log.d("onCloseWindow", "called");
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void handleUploadMessages(Intent intent, ValueCallback<Uri[]> mUploadMessages, Uri mCapturedImageURI) {
+        Uri[] results = null;
+        try {
+            if (intent != null) {
+                String dataString = intent.getDataString();
+                ClipData clipData = intent.getClipData();
+                if (clipData != null) {
+                    results = new Uri[clipData.getItemCount()];
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        ClipData.Item item = clipData.getItemAt(i);
+                        results[i] = item.getUri();
+                    }
+                }
+                if (dataString != null) {
+                    results = new Uri[]{Uri.parse(dataString)};
+                }
+            } else {
+                results = new Uri[]{mCapturedImageURI};
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
+        mUploadMessages.onReceiveValue(results);
     }
 }
